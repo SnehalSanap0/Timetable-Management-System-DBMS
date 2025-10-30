@@ -2,6 +2,7 @@ import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 import facultyRoutes from "./routes/facultyRoutes";
 import subjectRoutes from "./routes/subjectRoutes";
@@ -25,9 +26,22 @@ app.use("/api/labs", labRoutes);
 app.use("/api/timetables", timetableRoutes);
 app.use("/api/timetable-slots", timetableSlotsRouter);
 
+// Serve frontend static files in production
+if (process.env.NODE_ENV === "production") {
+  const frontendPath = path.join(__dirname, "../../frontend/dist");
+  app.use(express.static(frontendPath));
+  
+  // Handle React routing - return index.html for all non-API routes
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendPath, "index.html"));
+  });
+}
+
+const PORT = process.env.PORT || 3001;
+
 mongoose.connect(process.env.MONGO_URI!)
   .then(() => {
     console.log("✅ MongoDB connected");
-    app.listen(3001, () => console.log("🚀 Server running at http://localhost:3001"));
+    app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
   })
   .catch(err => console.error(err));
